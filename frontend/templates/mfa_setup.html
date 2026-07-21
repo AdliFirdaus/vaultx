@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Set Up MFA — VaultX{% endblock %}
+{% block content %}
+<div class="center-screen">
+  <div class="panel panel-wide">
+    <div class="brand-lockup"><span class="brand-shield">VX</span><span class="brand-name">VaultX</span></div>
+    <div class="badge-pill">🔐 Step 2 of 2</div>
+    <h1>Set up 2FA 📱</h1>
+    <p class="subtitle">Scan this QR code with Google Authenticator (or any TOTP app), then enter the 6-digit code to confirm.</p>
+
+    <div id="banner" class="banner"></div>
+
+    <div style="background:#fff; border: 1.5px solid var(--border); border-radius: 16px; padding: 16px; display:flex; justify-content:center; margin-bottom: 18px;">
+      <img id="qrImage" src="" alt="MFA QR Code" style="width: 210px; height: 210px;">
+    </div>
+
+    <p style="font-size: 13px; color: var(--text-secondary); text-align:center; margin-bottom: 24px;">
+      Can't scan? Enter this key manually: <br>
+      <span class="mono" id="secretText" style="color: var(--accent-dark); word-break: break-all; font-weight: 700;"></span>
+    </p>
+
+    <label style="text-align:center; display:block;">Enter the 6-digit code</label>
+    <div class="otp-boxes" id="otpContainer">
+      <input type="text" inputmode="numeric" maxlength="1">
+      <input type="text" inputmode="numeric" maxlength="1">
+      <input type="text" inputmode="numeric" maxlength="1">
+      <input type="text" inputmode="numeric" maxlength="1">
+      <input type="text" inputmode="numeric" maxlength="1">
+      <input type="text" inputmode="numeric" maxlength="1">
+    </div>
+
+    <button class="btn btn-primary btn-block" id="verifyBtn">Verify &amp; enable 2FA →</button>
+  </div>
+</div>
+
+<script src="/static/js/common.js"></script>
+<script>
+  const qrCode = sessionStorage.getItem("vaultx_qr_code");
+  const totpSecret = sessionStorage.getItem("vaultx_totp_secret");
+  const userId = sessionStorage.getItem("vaultx_user_id");
+
+  if (!qrCode || !userId) {
+    window.location.href = "/register";
+  }
+
+  document.getElementById("qrImage").src = qrCode;
+  document.getElementById("secretText").textContent = totpSecret;
+
+  wireOtpBoxes("#otpContainer");
+
+  const banner = document.getElementById("banner");
+  const verifyBtn = document.getElementById("verifyBtn");
+
+  verifyBtn.addEventListener("click", async () => {
+    hideBanner(banner);
+    const otp_code = getOtpValue("#otpContainer");
+    if (otp_code.length !== 6) {
+      showBanner(banner, "Please enter all 6 digits.");
+      return;
+    }
+    verifyBtn.disabled = true;
+    verifyBtn.textContent = "Verifying...";
+
+    try {
+      await apiRequest("/api/mfa/setup/verify", {
+        method: "POST",
+        body: JSON.stringify({ otp_code, user_id: userId }),
+      });
+      sessionStorage.removeItem("vaultx_qr_code");
+      sessionStorage.removeItem("vaultx_totp_secret");
+      window.location.href = "/dashboard";
+    } catch (err) {
+      showBanner(banner, err.message);
+      verifyBtn.disabled = false;
+      verifyBtn.textContent = "Verify & enable 2FA →";
+    }
+  });
+</script>
+{% endblock %}

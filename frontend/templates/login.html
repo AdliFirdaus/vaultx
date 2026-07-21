@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Sign In — VaultX{% endblock %}
+{% block content %}
+<div class="center-screen">
+  <div class="panel">
+    <div class="brand-lockup"><span class="brand-shield">VX</span><span class="brand-name">VaultX</span></div>
+    <div class="badge-pill">✅ Secure Session</div>
+    <h1>Welcome back! 👋</h1>
+    <p class="subtitle">Sign in to your secure vault and access your files safely encrypted.</p>
+
+    <div id="banner" class="banner"></div>
+
+    <form id="loginForm">
+      <label for="email">Email address</label>
+      <div class="input-group">
+        <span class="input-icon">📧</span>
+        <input type="email" id="email" placeholder="you@example.com" required>
+      </div>
+
+      <label for="password">Password</label>
+      <div class="input-group">
+        <span class="input-icon">🔒</span>
+        <input type="password" id="password" class="has-eye" placeholder="Your password" required>
+        <button type="button" class="input-eye" onclick="toggleEye('password', this)">👁️</button>
+      </div>
+      <p style="text-align: right; margin: -8px 0 18px;">
+        <a href="/forgot-password" style="font-size: 13.5px;">Forgot password?</a>
+      </p>
+
+      <button type="submit" class="btn btn-primary btn-block" id="submitBtn">Continue →</button>
+    </form>
+
+    <div class="divider"><span>OR</span></div>
+    <p class="foot-note" style="margin-bottom: 0;">Don't have an account? <a href="/register">Create one</a></p>
+
+    <div class="tip-box">
+      <div class="tip-icon">🛡️</div>
+      <div>
+        <div class="tip-title">Your security is our priority</div>
+        <div class="tip-desc">All data is encrypted with AES-256 and protected with MFA.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/common.js"></script>
+<script>
+  const form = document.getElementById("loginForm");
+  const banner = document.getElementById("banner");
+  const submitBtn = document.getElementById("submitBtn");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    hideBanner(banner);
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Verifying...";
+
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+
+    try {
+      const data = await apiRequest("/api/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      });
+      sessionStorage.setItem("vaultx_user_id", data.user_id);
+      window.location.href = "/mfa-verify";
+    } catch (err) {
+      showBanner(banner, err.message);
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Continue →";
+    }
+  });
+</script>
+{% endblock %}

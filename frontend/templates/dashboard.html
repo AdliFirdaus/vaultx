@@ -1,0 +1,558 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — VaultX{% endblock %}
+{% block extra_head %}
+<style>
+  body { display: flex; min-height: 100vh; background-image: none; background: var(--bg); }
+
+  /* ---- Sidebar ---- */
+  .sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    background: var(--bg-card);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 26px 18px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  .sidebar-brand {
+    display: flex; align-items: center; gap: 10px;
+    padding: 4px 8px 26px; font-size: 20px; font-weight: 800; font-family: var(--font-head);
+  }
+  .sidebar-brand .brand-shield { width: 32px; height: 32px; }
+
+  .sidebar-nav { display: flex; flex-direction: column; gap: 4px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 12px; border-radius: 11px; cursor: pointer;
+    color: var(--text-secondary); font-weight: 700; font-size: 14.5px;
+    transition: background 0.15s ease, color 0.15s ease;
+    border: none; background: none; width: 100%; text-align: left; font-family: var(--font-body);
+  }
+  .nav-item .nav-icon {
+    width: 30px; height: 30px; border-radius: 9px; display: flex; align-items: center; justify-content: center;
+    font-size: 15px; background: var(--bg-soft); flex-shrink: 0;
+  }
+  .nav-item:hover { background: var(--bg-soft); color: var(--text-primary); }
+  .nav-item.active { background: var(--accent-soft); color: var(--accent-dark); }
+  .nav-item.active .nav-icon { background: #ffffff; }
+
+  .sidebar-spacer { flex: 1; }
+
+  .sidebar-tip {
+    background: var(--accent-softer); border: 1px solid var(--border-soft); border-radius: 14px;
+    padding: 16px; margin: 20px 0 14px;
+  }
+  .sidebar-tip .tip-icon-circle {
+    width: 32px; height: 32px; border-radius: 9px; margin-bottom: 8px;
+    background: linear-gradient(150deg, var(--accent), var(--accent-dark));
+    display: flex; align-items: center; justify-content: center; font-size: 14px;
+  }
+  .sidebar-tip .tip-title { font-weight: 800; font-size: 13px; color: var(--accent-dark); margin-bottom: 4px; }
+  .sidebar-tip .tip-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+
+  .sidebar-user {
+    display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 12px;
+    background: var(--bg-soft); margin-bottom: 10px;
+  }
+  .user-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(150deg, var(--accent), var(--accent-dark));
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-family: var(--font-head); font-size: 14px; flex-shrink: 0;
+  }
+  .user-meta { overflow: hidden; }
+  .user-name { font-weight: 800; font-size: 13.5px; color: var(--text-primary); }
+  .user-email { font-size: 11.5px; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .logout-btn {
+    width: 100%; background: #ffffff; color: var(--danger);
+    border: 1.5px solid var(--danger-soft); border-radius: 11px; padding: 11px;
+    font-weight: 800; font-size: 13.5px; cursor: pointer; font-family: var(--font-body);
+  }
+  .logout-btn:hover { background: var(--danger-soft); }
+
+  /* ---- Main content ---- */
+  .main-area { flex: 1; min-width: 0; }
+  .main-inner { max-width: 1150px; margin: 0 auto; padding: 36px 36px 64px; }
+
+  .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; flex-wrap: wrap; gap: 14px; }
+  .page-header h1 { font-size: 30px; margin: 0; font-weight: 800; }
+  .page-header p { color: var(--text-secondary); margin: 6px 0 0; font-size: 14.5px; font-weight: 500; }
+
+  .page-view { display: none; animation: fadeIn 0.2s ease; }
+  .page-view.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 20px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .stat-icon-circle { width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+  .stat-icon-blue { background: var(--blue-soft); }
+  .stat-icon-teal { background: var(--accent-soft); }
+  .stat-icon-purple { background: var(--purple-soft); }
+  .stat-card .stat-label { font-size: 11.5px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 800; }
+  .stat-card .stat-value { font-family: var(--font-head); font-size: 25px; font-weight: 800; margin-top: 2px; }
+  .stat-card .stat-sub { font-size: 11.5px; color: var(--text-muted); font-weight: 600; margin-top: 1px; }
+  .stat-value-purple { color: var(--purple); }
+
+  .dropzone {
+    border: 2px dashed #b7e4dc; border-radius: 18px; padding: 40px 20px; text-align: center;
+    margin-bottom: 28px; transition: border-color 0.15s ease, background 0.15s ease; cursor: pointer;
+    background: var(--accent-softer);
+  }
+  .dropzone:hover { border-color: var(--accent); }
+  .dropzone.drag-over { border-color: var(--accent); background: var(--accent-soft); }
+  .dropzone .dz-icon {
+    width: 52px; height: 52px; border-radius: 15px; margin: 0 auto 12px;
+    background: linear-gradient(150deg, var(--accent), var(--accent-dark));
+    display: flex; align-items: center; justify-content: center; font-size: 22px;
+    box-shadow: 0 12px 22px -10px rgba(13, 148, 136, 0.5);
+  }
+  .dropzone .dz-title { color: var(--text-primary); font-weight: 800; font-size: 16px; margin-bottom: 6px; font-family: var(--font-head); }
+  .dropzone p { margin: 0; color: var(--text-secondary); font-size: 13px; font-weight: 600; }
+
+  .progress-wrap { display: none; margin-bottom: 24px; }
+  .progress-bar-bg { background: var(--bg-soft); border-radius: 8px; height: 9px; overflow: hidden; border: 1px solid var(--border); }
+  .progress-bar-fill { background: linear-gradient(90deg, var(--accent), var(--accent-dark)); height: 100%; width: 0%; transition: width 0.2s ease; }
+  .progress-label { font-size: 12.5px; color: var(--text-secondary); margin-top: 8px; font-weight: 700; }
+
+  .list-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; gap: 12px; flex-wrap: wrap; }
+  .list-toolbar h3 { margin: 0; font-size: 17px; display: flex; align-items: center; gap: 8px; }
+  .search-box { position: relative; flex: 1; max-width: 320px; }
+  .search-box input {
+    width: 100%; padding: 10px 14px 10px 38px; border-radius: 10px; border: 1.5px solid var(--border);
+    background: var(--bg-card); color: var(--text-primary); font-family: var(--font-body); font-size: 13.5px; font-weight: 600;
+  }
+  .search-box input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .search-box::before { content: "🔍"; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 13px; opacity: 0.6; }
+
+  table { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
+  thead th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); padding: 0 14px 10px; font-weight: 800; }
+  tbody tr { background: var(--bg-card); transition: box-shadow 0.12s ease; }
+  tbody tr:hover { box-shadow: 0 6px 18px -12px rgba(22, 35, 58, 0.3); }
+  tbody tr td:first-child { border-radius: 12px 0 0 12px; border-left: 1px solid var(--border); }
+  tbody tr td:last-child { border-radius: 0 12px 12px 0; border-right: 1px solid var(--border); }
+  td { padding: 15px 14px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); font-size: 14px; }
+
+  .file-name { font-weight: 700; }
+  .file-hash { color: var(--text-muted); font-size: 11.5px; font-family: var(--font-mono); }
+  .action-link { font-size: 12.5px; font-weight: 800; margin-right: 8px; cursor: pointer; border: none; font-family: var(--font-body); padding: 7px 12px; border-radius: 8px; }
+  .action-download { color: var(--accent-dark); background: var(--accent-soft); }
+  .action-delete { color: var(--danger); background: var(--danger-soft); }
+
+  .badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 800; padding: 4px 11px; border-radius: 20px; letter-spacing: 0.02em; }
+  .badge-success { background: var(--success-soft); color: var(--success); }
+  .badge-failed { background: var(--danger-soft); color: var(--danger); }
+
+  .refresh-btn {
+    display: flex; align-items: center; gap: 6px; background: var(--accent-soft); color: var(--accent-dark);
+    border: none; border-radius: 10px; padding: 10px 18px; font-weight: 800; font-size: 13.5px;
+    cursor: pointer; font-family: var(--font-body);
+  }
+  .refresh-btn:hover { background: #d1f0ea; }
+
+  .settings-list { display: flex; flex-direction: column; gap: 12px; }
+  .setting-item {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 18px 22px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .setting-item .setting-name { font-weight: 800; font-size: 14.5px; }
+  .setting-item .setting-desc { font-size: 13px; color: var(--text-secondary); margin-top: 3px; font-weight: 600; }
+  .setting-status {
+    font-size: 12px; font-weight: 800; color: var(--success); white-space: nowrap;
+    background: var(--success-soft); padding: 5px 12px; border-radius: 20px;
+  }
+  .setting-status.info { color: var(--blue); background: var(--blue-soft); }
+
+  .empty-state { text-align: center; padding: 56px 20px; color: var(--text-secondary); font-size: 14px; background: var(--bg-card); border: 1px dashed var(--border); border-radius: 16px; }
+  .empty-state .empty-icon { font-size: 34px; margin-bottom: 10px; }
+  .empty-state .empty-title { font-weight: 800; color: var(--text-primary); font-size: 16px; margin-bottom: 4px; font-family: var(--font-head); }
+
+  @media (max-width: 860px) {
+    .sidebar { position: fixed; z-index: 30; transform: translateX(-100%); transition: transform 0.2s ease; }
+    .sidebar.open { transform: translateX(0); }
+    .main-inner { padding: 24px 18px 48px; }
+  }
+</style>
+{% endblock %}
+{% block content %}
+<aside class="sidebar">
+  <div class="sidebar-brand"><span class="brand-shield">VX</span> VaultX</div>
+  <nav class="sidebar-nav">
+    <button class="nav-item active" data-tab="files"><span class="nav-icon">📁</span> My Files</button>
+    <button class="nav-item" data-tab="activity"><span class="nav-icon">📋</span> Activity Log</button>
+    <button class="nav-item" data-tab="settings"><span class="nav-icon">⚙️</span> Settings</button>
+  </nav>
+
+  <div class="sidebar-spacer"></div>
+
+  <div class="sidebar-tip">
+    <div class="tip-icon-circle">🛡️</div>
+    <div class="tip-title">Your data is safe</div>
+    <div class="tip-desc">All files are AES-256 encrypted and secured with MFA.</div>
+  </div>
+
+  <div class="sidebar-user">
+    <div class="user-avatar" id="userAvatar">?</div>
+    <div class="user-meta">
+      <div class="user-name" id="userNameLabel">—</div>
+      <div class="user-email" id="userEmailLabel">—</div>
+    </div>
+  </div>
+  <button class="logout-btn" id="logoutBtn">🚪 Log out</button>
+</aside>
+
+<main class="main-area">
+  <div class="main-inner">
+
+    <!-- MY FILES -->
+    <div class="page-view active" id="view-files">
+      <div class="page-header">
+        <div>
+          <h1>My Vault 👋</h1>
+          <p>Every file here is AES-256 encrypted at rest and integrity-checked on download.</p>
+        </div>
+        <button class="btn btn-primary" id="uploadTriggerBtn">☁️ Upload File</button>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon-circle stat-icon-blue">📂</div>
+          <div><div class="stat-label">Files Stored</div><div class="stat-value" id="statTotalFiles">0</div><div class="stat-sub">All encrypted</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon-circle stat-icon-teal">🗄️</div>
+          <div><div class="stat-label">Storage Used</div><div class="stat-value" id="statStorageUsed">0 B</div><div class="stat-sub">AES-256-CBC</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon-circle stat-icon-purple">🛡️</div>
+          <div><div class="stat-label">Security Level</div><div class="stat-value stat-value-purple">MAX</div><div class="stat-sub">MFA + Encryption</div></div>
+        </div>
+      </div>
+
+      <div class="dropzone" id="dropzone">
+        <div class="dz-icon">☁️</div>
+        <div class="dz-title">Drop files here or click to upload</div>
+        <p>Files will be AES-256 encrypted before storage. Max 50MB.</p>
+        <input type="file" id="fileInput" style="display:none;">
+      </div>
+
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
+        <div class="progress-label" id="progressLabel">Encrypting and uploading...</div>
+      </div>
+
+      <div class="list-toolbar">
+        <h3>🔒 Encrypted Files</h3>
+        <div class="search-box"><input type="text" id="fileSearchInput" placeholder="Search files..."></div>
+      </div>
+
+      <table>
+        <thead><tr><th>File</th><th>Size</th><th>Uploaded</th><th>SHA-256</th><th></th></tr></thead>
+        <tbody id="filesTableBody"></tbody>
+      </table>
+      <div class="empty-state" id="filesEmptyState" style="display:none;">
+        <div class="empty-icon">🗂️</div>
+        <div class="empty-title">No files yet.</div>
+        Upload your first encrypted file above.
+      </div>
+    </div>
+
+    <!-- ACTIVITY LOG -->
+    <div class="page-view" id="view-activity">
+      <div class="page-header">
+        <div>
+          <h1>Activity Log 📋</h1>
+          <p>All security events recorded — every login, upload, download, and change.</p>
+        </div>
+        <button class="refresh-btn" id="refreshLogsBtn">🔄 Refresh</button>
+      </div>
+      <table>
+        <thead><tr><th>Action</th><th>Details</th><th>IP Address</th><th>Status</th><th>Time</th></tr></thead>
+        <tbody id="logsTableBody"></tbody>
+      </table>
+      <div class="empty-state" id="logsEmptyState" style="display:none;">
+        <div class="empty-icon">📋</div>
+        <div class="empty-title">No activity recorded yet.</div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page-view" id="view-settings">
+      <div class="page-header">
+        <div>
+          <h1>Security Settings ⚙️</h1>
+          <p>Your account protection status at a glance.</p>
+        </div>
+      </div>
+      <div class="settings-list">
+        <div class="setting-item"><div><div class="setting-name">Multi-Factor Authentication</div><div class="setting-desc">Google Authenticator (TOTP)</div></div><div class="setting-status">✔ ACTIVE</div></div>
+        <div class="setting-item"><div><div class="setting-name">File Encryption</div><div class="setting-desc">AES-256-CBC with random IV</div></div><div class="setting-status">✔ ACTIVE</div></div>
+        <div class="setting-item"><div><div class="setting-name">Password Hashing</div><div class="setting-desc">bcrypt with salt (12 rounds)</div></div><div class="setting-status">✔ ACTIVE</div></div>
+        <div class="setting-item"><div><div class="setting-name">File Integrity Check</div><div class="setting-desc">SHA-256 hash verification on download</div></div><div class="setting-status">✔ ACTIVE</div></div>
+        <div class="setting-item"><div><div class="setting-name">Key Management (HashiCorp Vault)</div><div class="setting-desc">AES master key stored outside the app</div></div><div class="setting-status" id="vaultSettingStatus">Checking...</div></div>
+        <div class="setting-item"><div><div class="setting-name">Rate Limiting</div><div class="setting-desc">10 login attempts per minute per IP</div></div><div class="setting-status">✔ ACTIVE</div></div>
+        <div class="setting-item"><div><div class="setting-name">Account Lockout</div><div class="setting-desc">Locked 15 minutes after 5 failed attempts</div></div><div class="setting-status">✔ ACTIVE</div></div>
+        <div class="setting-item"><div><div class="setting-name">Session Timeout</div><div class="setting-desc">Auto logout after 30 minutes</div></div><div class="setting-status info">30 min</div></div>
+        <div class="setting-item"><div><div class="setting-name">Audit Logging</div><div class="setting-desc">All activities recorded with IP address</div></div><div class="setting-status">✔ ACTIVE</div></div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script src="/static/js/common.js"></script>
+<script>
+  // ---- Auth guard + user info ----
+  (async function initDashboard() {
+    try {
+      const me = await apiRequest("/api/me");
+      document.getElementById("userEmailLabel").textContent = me.user.email;
+      document.getElementById("userNameLabel").textContent = me.user.name || me.user.email.split("@")[0];
+      document.getElementById("userAvatar").textContent = (me.user.name || me.user.email).charAt(0).toUpperCase();
+    } catch (err) {
+      window.location.href = "/login";
+      return;
+    }
+    loadFiles();
+    loadLogs();
+    loadVaultStatus();
+  })();
+
+  document.getElementById("logoutBtn").addEventListener("click", async () => {
+    try { await apiRequest("/api/logout", { method: "POST" }); } catch (e) {}
+    window.location.href = "/login";
+  });
+
+  // ---- Sidebar navigation ----
+  document.querySelectorAll(".nav-item").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".nav-item").forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll(".page-view").forEach((p) => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById(`view-${btn.dataset.tab}`).classList.add("active");
+
+      if (btn.dataset.tab === "files") loadFiles();
+      if (btn.dataset.tab === "activity") loadLogs();
+      if (btn.dataset.tab === "settings") loadVaultStatus();
+    });
+  });
+
+  document.getElementById("refreshLogsBtn").addEventListener("click", () => loadLogs());
+  document.getElementById("uploadTriggerBtn").addEventListener("click", () => document.getElementById("fileInput").click());
+
+  // ---- Files ----
+  let allFiles = [];
+
+  async function loadFiles() {
+    try {
+      const data = await apiRequest("/api/files");
+      allFiles = data.files || [];
+
+      document.getElementById("statTotalFiles").textContent = allFiles.length;
+      const totalBytes = allFiles.reduce((sum, f) => sum + (f.file_size || 0), 0);
+      document.getElementById("statStorageUsed").textContent = formatBytes(totalBytes);
+
+      renderFilesTable(allFiles);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  function renderFilesTable(files) {
+    const tbody = document.getElementById("filesTableBody");
+    const empty = document.getElementById("filesEmptyState");
+    tbody.innerHTML = "";
+
+    if (files.length === 0) {
+      empty.style.display = "block";
+      return;
+    }
+    empty.style.display = "none";
+
+    files.forEach((f) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><div class="file-name">📄 ${escapeHtml(f.original_name)}</div></td>
+        <td>${formatBytes(f.file_size)}</td>
+        <td>${formatDateTime(f.uploaded_at)}</td>
+        <td class="file-hash">${f.sha256_hash.slice(0, 16)}...</td>
+        <td>
+          <button class="action-link action-download" data-id="${f.id}">⬇ Download</button>
+          <button class="action-link action-delete" data-id="${f.id}">🗑 Delete</button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+
+    tbody.querySelectorAll(".action-download").forEach((btn) => {
+      btn.addEventListener("click", () => downloadFile(btn.dataset.id));
+    });
+    tbody.querySelectorAll(".action-delete").forEach((btn) => {
+      btn.addEventListener("click", () => deleteFile(btn.dataset.id));
+    });
+  }
+
+  document.getElementById("fileSearchInput").addEventListener("input", (e) => {
+    const query = e.target.value.trim().toLowerCase();
+    const filtered = query
+      ? allFiles.filter((f) => f.original_name.toLowerCase().includes(query))
+      : allFiles;
+    renderFilesTable(filtered);
+  });
+
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  async function downloadFile(fileId) {
+    try {
+      const res = await fetch(`${API_BASE}/api/files/${fileId}/download`, { credentials: "include" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Download failed.");
+      }
+      const disposition = res.headers.get("Content-Disposition") || "";
+      let filename = "download";
+      const match = disposition.match(/filename="?([^"]+)"?/);
+      if (match) filename = match[1];
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      loadLogs();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  async function deleteFile(fileId) {
+    if (!confirm("Delete this file permanently?")) return;
+    try {
+      await apiRequest(`/api/files/${fileId}`, { method: "DELETE" });
+      loadFiles();
+      loadLogs();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  // ---- Upload (drag & drop + click) ----
+  const dropzone = document.getElementById("dropzone");
+  const fileInput = document.getElementById("fileInput");
+
+  dropzone.addEventListener("click", () => fileInput.click());
+  fileInput.addEventListener("change", () => {
+    if (fileInput.files.length) uploadFile(fileInput.files[0]);
+  });
+
+  ["dragenter", "dragover"].forEach((evt) => {
+    dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.add("drag-over"); });
+  });
+  ["dragleave", "drop"].forEach((evt) => {
+    dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.remove("drag-over"); });
+  });
+  dropzone.addEventListener("drop", (e) => {
+    const file = e.dataTransfer.files[0];
+    if (file) uploadFile(file);
+  });
+
+  function uploadFile(file) {
+    const progressWrap = document.getElementById("progressWrap");
+    const progressFill = document.getElementById("progressFill");
+    const progressLabel = document.getElementById("progressLabel");
+
+    progressWrap.style.display = "block";
+    progressFill.style.width = "0%";
+    progressLabel.textContent = `Encrypting "${file.name}"...`;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `${API_BASE}/api/files/upload`, true);
+    xhr.withCredentials = true;
+
+    xhr.upload.addEventListener("progress", (e) => {
+      if (e.lengthComputable) {
+        const pct = Math.round((e.loaded / e.total) * 100);
+        progressFill.style.width = `${pct}%`;
+        progressLabel.textContent = pct < 100 ? `Uploading... ${pct}%` : "Encrypting on server...";
+      }
+    });
+
+    xhr.onload = () => {
+      progressWrap.style.display = "none";
+      fileInput.value = "";
+      if (xhr.status >= 200 && xhr.status < 300) {
+        loadFiles();
+        loadLogs();
+      } else {
+        let message = "Upload failed.";
+        try { message = JSON.parse(xhr.responseText).error || message; } catch (e) {}
+        alert(message);
+      }
+    };
+    xhr.onerror = () => {
+      progressWrap.style.display = "none";
+      alert("Upload failed due to a network error.");
+    };
+    xhr.send(formData);
+  }
+
+  // ---- Activity Log ----
+  async function loadLogs() {
+    try {
+      const data = await apiRequest("/api/logs");
+      const logs = data.logs || [];
+      const tbody = document.getElementById("logsTableBody");
+      const empty = document.getElementById("logsEmptyState");
+      tbody.innerHTML = "";
+
+      if (logs.length === 0) {
+        empty.style.display = "block";
+        return;
+      }
+      empty.style.display = "none";
+
+      logs.forEach((log) => {
+        const tr = document.createElement("tr");
+        const badgeClass = log.status === "SUCCESS" ? "badge-success" : "badge-failed";
+        tr.innerHTML = `
+          <td>${escapeHtml(log.action)}</td>
+          <td>${escapeHtml(log.details || "—")}</td>
+          <td class="mono">${escapeHtml(log.ip_address || "—")}</td>
+          <td><span class="badge ${badgeClass}">${log.status}</span></td>
+          <td>${formatDateTime(log.timestamp)}</td>`;
+        tbody.appendChild(tr);
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  // ---- Vault status ----
+  async function loadVaultStatus() {
+    try {
+      const status = await apiRequest("/api/vault/status");
+      const settingEl = document.getElementById("vaultSettingStatus");
+      settingEl.textContent = status.connected ? "✔ ACTIVE" : "⚠ LOCAL FALLBACK";
+      settingEl.className = status.connected ? "setting-status" : "setting-status info";
+    } catch (err) {
+      // leave as "Checking..." on failure
+    }
+  }
+</script>
+{% endblock %}

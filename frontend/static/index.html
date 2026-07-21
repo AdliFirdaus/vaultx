@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VaultX — Standalone SPA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080c14; --bg-elevated: #0d1420; --bg-card: #101a29; --border: #1b2637;
+    --accent: #00d4ff; --accent-soft: rgba(0,212,255,0.1);
+    --text-primary: #eaf2f8; --text-secondary: #7d8ea3; --text-muted: #4c5a6e;
+    --danger: #ff4d6a; --success: #2be0a3; --warning: #ffb547;
+    --font-head: 'Syne', sans-serif; --font-body: 'DM Sans', sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text-primary); font-family:var(--font-body); min-height:100vh; }
+  h1,h2,.brand { font-family: var(--font-head); }
+  .screen { display:none; }
+  .screen.active { display:flex; }
+  .center-screen { min-height:100vh; align-items:center; justify-content:center; padding:24px; }
+  .panel { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:40px; width:100%; max-width:420px; }
+  .eyebrow { font-size:12px; text-transform:uppercase; letter-spacing:0.12em; color:var(--accent); font-weight:700; margin-bottom:8px; }
+  .panel p.subtitle { color:var(--text-secondary); margin:0 0 24px; font-size:14px; }
+  label { display:block; font-size:13px; color:var(--text-secondary); margin-bottom:6px; }
+  input { width:100%; padding:13px 14px; border-radius:8px; border:1px solid var(--border); background:var(--bg-elevated); color:var(--text-primary); font-family:var(--font-body); font-size:14px; margin-bottom:16px; }
+  input:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+  .btn { font-family:var(--font-body); font-weight:700; font-size:14px; border:none; border-radius:10px; padding:12px 22px; cursor:pointer; width:100%; }
+  .btn-primary { background:var(--accent); color:#041018; }
+  .btn-ghost { background:transparent; border:1px solid var(--border); color:var(--text-primary); }
+  .banner { border-radius:8px; padding:12px 16px; font-size:13.5px; margin-bottom:18px; display:none; }
+  .banner-error { background:rgba(255,77,106,0.12); color:#ff8fa3; border:1px solid rgba(255,77,106,0.3); }
+  .foot-note { text-align:center; margin-top:20px; font-size:13.5px; color:var(--text-secondary); }
+  .foot-note a { color:var(--accent); cursor:pointer; }
+  .otp-boxes { display:flex; gap:8px; margin-bottom:18px; }
+  .otp-boxes input { text-align:center; font-size:20px; font-weight:700; padding:12px 0; margin-bottom:0; font-family:var(--font-head); }
+  #dashboardScreen { display:none; flex-direction:column; min-height:100vh; }
+  #dashboardScreen.active { display:flex; }
+  .topbar { display:flex; justify-content:space-between; align-items:center; padding:18px 32px; border-bottom:1px solid var(--border); }
+  .container { max-width:1000px; margin:0 auto; padding:32px 24px; width:100%; }
+  table { width:100%; border-collapse:collapse; }
+  th { text-align:left; font-size:12px; text-transform:uppercase; color:var(--text-muted); padding:10px 12px; border-bottom:1px solid var(--border); }
+  td { padding:12px; border-bottom:1px solid var(--border); font-size:14px; }
+  .action-link { font-size:13px; font-weight:600; margin-right:12px; cursor:pointer; background:none; border:none; }
+  .action-download { color:var(--accent); }
+  .action-delete { color:var(--danger); }
+  .dropzone { border:2px dashed var(--border); border-radius:14px; padding:32px 20px; text-align:center; margin-bottom:24px; cursor:pointer; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="screen active center-screen" id="loginScreen">
+  <div class="panel">
+    <div class="eyebrow">VaultX (standalone)</div>
+    <h1>Welcome back</h1>
+    <p class="subtitle">Sign in to access your encrypted files.</p>
+    <div class="banner banner-error" id="loginBanner"></div>
+    <label>Email</label><input type="email" id="loginEmail">
+    <label>Password</label><input type="password" id="loginPassword">
+    <button class="btn btn-primary" onclick="doLogin()">Continue</button>
+    <p class="foot-note">No account? <a onclick="showScreen('registerScreen')">Register</a></p>
+  </div>
+</div>
+
+<!-- REGISTER -->
+<div class="screen center-screen" id="registerScreen">
+  <div class="panel">
+    <div class="eyebrow">VaultX (standalone)</div>
+    <h1>Create your vault</h1>
+    <p class="subtitle">AES-256 encrypted storage with mandatory 2FA.</p>
+    <div class="banner banner-error" id="registerBanner"></div>
+    <label>Name</label><input type="text" id="regName">
+    <label>Email</label><input type="email" id="regEmail">
+    <label>Password</label><input type="password" id="regPassword">
+    <button class="btn btn-primary" onclick="doRegister()">Create account</button>
+    <p class="foot-note">Already have an account? <a onclick="showScreen('loginScreen')">Sign in</a></p>
+  </div>
+</div>
+
+<!-- MFA SETUP -->
+<div class="screen center-screen" id="mfaSetupScreen">
+  <div class="panel">
+    <div class="eyebrow">Step 2 of 2</div>
+    <h1>Set up 2FA</h1>
+    <p class="subtitle">Scan with Google Authenticator, then confirm the code.</p>
+    <div class="banner banner-error" id="mfaSetupBanner"></div>
+    <div style="background:#fff;border-radius:12px;padding:16px;display:flex;justify-content:center;margin-bottom:16px;">
+      <img id="setupQr" style="width:200px;height:200px;">
+    </div>
+    <div class="otp-boxes" id="setupOtp">
+      <input maxlength="1"><input maxlength="1"><input maxlength="1"><input maxlength="1"><input maxlength="1"><input maxlength="1">
+    </div>
+    <button class="btn btn-primary" onclick="doMfaSetupVerify()">Verify & enable 2FA</button>
+  </div>
+</div>
+
+<!-- MFA VERIFY -->
+<div class="screen center-screen" id="mfaVerifyScreen">
+  <div class="panel">
+    <div class="eyebrow">Step 2 of 2</div>
+    <h1>Enter your code</h1>
+    <p class="subtitle">Open your authenticator app and enter the current code.</p>
+    <div class="banner banner-error" id="mfaVerifyBanner"></div>
+    <div class="otp-boxes" id="loginOtp">
+      <input maxlength="1"><input maxlength="1"><input maxlength="1"><input maxlength="1"><input maxlength="1"><input maxlength="1">
+    </div>
+    <button class="btn btn-primary" onclick="doMfaLoginVerify()">Verify & sign in</button>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="screen" id="dashboardScreen">
+  <div class="topbar">
+    <div class="brand">VaultX</div>
+    <button class="btn btn-ghost" style="width:auto;" onclick="doLogout()">Log out</button>
+  </div>
+  <div class="container">
+    <h1>Your files</h1>
+    <div class="dropzone" onclick="document.getElementById('spaFileInput').click()">
+      Click to select a file to encrypt & upload (max 50MB)
+      <input type="file" id="spaFileInput" style="display:none;" onchange="doUpload()">
+    </div>
+    <table>
+      <thead><tr><th>File</th><th>Size</th><th>Uploaded</th><th></th></tr></thead>
+      <tbody id="spaFilesBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  const API_BASE = window.location.origin;
+  let pendingUserId = null;
+
+  function showScreen(id) {
+    document.querySelectorAll(".screen").forEach((s) => s.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+  }
+
+  function showBanner(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.style.display = "block";
+  }
+  function hideBanner(id) { document.getElementById(id).style.display = "none"; }
+
+  async function apiRequest(path, options = {}) {
+    const res = await fetch(`${API_BASE}${path}`, {
+      credentials: "include",
+      headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+      ...options,
+    });
+    let data = null;
+    try { data = await res.json(); } catch (e) {}
+    if (!res.ok) throw new Error((data && data.error) || `Request failed (${res.status})`);
+    return data;
+  }
+
+  function wireOtp(containerId) {
+    const boxes = Array.from(document.querySelectorAll(`#${containerId} input`));
+    boxes.forEach((box, idx) => {
+      box.addEventListener("input", () => {
+        box.value = box.value.replace(/[^0-9]/g, "").slice(0, 1);
+        if (box.value && idx < boxes.length - 1) boxes[idx + 1].focus();
+      });
+      box.addEventListener("keydown", (e) => {
+        if (e.key === "Backspace" && !box.value && idx > 0) boxes[idx - 1].focus();
+      });
+      box.addEventListener("paste", (e) => {
+        e.preventDefault();
+        const pasted = (e.clipboardData || window.clipboardData).getData("text").replace(/[^0-9]/g, "");
+        pasted.split("").forEach((d, i) => { if (boxes[i]) boxes[i].value = d; });
+      });
+    });
+  }
+  wireOtp("setupOtp");
+  wireOtp("loginOtp");
+
+  function getOtp(containerId) {
+    return Array.from(document.querySelectorAll(`#${containerId} input`)).map((b) => b.value).join("");
+  }
+
+  async function doRegister() {
+    hideBanner("registerBanner");
+    try {
+      const data = await apiRequest("/api/register", {
+        method: "POST",
+        body: JSON.stringify({
+          name: document.getElementById("regName").value.trim(),
+          email: document.getElementById("regEmail").value.trim(),
+          password: document.getElementById("regPassword").value,
+        }),
+      });
+      pendingUserId = data.user_id;
+      document.getElementById("setupQr").src = data.qr_code;
+      showScreen("mfaSetupScreen");
+    } catch (err) { showBanner("registerBanner", err.message); }
+  }
+
+  async function doMfaSetupVerify() {
+    hideBanner("mfaSetupBanner");
+    try {
+      await apiRequest("/api/mfa/setup/verify", {
+        method: "POST",
+        body: JSON.stringify({ otp_code: getOtp("setupOtp"), user_id: pendingUserId }),
+      });
+      showScreen("dashboardScreen");
+      loadSpaFiles();
+    } catch (err) { showBanner("mfaSetupBanner", err.message); }
+  }
+
+  async function doLogin() {
+    hideBanner("loginBanner");
+    try {
+      const data = await apiRequest("/api/login", {
+        method: "POST",
+        body: JSON.stringify({
+          email: document.getElementById("loginEmail").value.trim(),
+          password: document.getElementById("loginPassword").value,
+        }),
+      });
+      pendingUserId = data.user_id;
+      showScreen("mfaVerifyScreen");
+    } catch (err) { showBanner("loginBanner", err.message); }
+  }
+
+  async function doMfaLoginVerify() {
+    hideBanner("mfaVerifyBanner");
+    try {
+      await apiRequest("/api/login/mfa", {
+        method: "POST",
+        body: JSON.stringify({ otp_code: getOtp("loginOtp"), user_id: pendingUserId }),
+      });
+      showScreen("dashboardScreen");
+      loadSpaFiles();
+    } catch (err) { showBanner("mfaVerifyBanner", err.message); }
+  }
+
+  async function doLogout() {
+    try { await apiRequest("/api/logout", { method: "POST" }); } catch (e) {}
+    showScreen("loginScreen");
+  }
+
+  function formatBytes(bytes) {
+    if (!bytes) return "0 B";
+    const units = ["B", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${units[i]}`;
+  }
+
+  async function loadSpaFiles() {
+    try {
+      const data = await apiRequest("/api/files");
+      const tbody = document.getElementById("spaFilesBody");
+      tbody.innerHTML = "";
+      (data.files || []).forEach((f) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${f.original_name}</td><td>${formatBytes(f.file_size)}</td><td>${new Date(f.uploaded_at).toLocaleString()}</td>
+          <td><button class="action-link action-download" onclick="spaDownload(${f.id})">Download</button>
+          <button class="action-link action-delete" onclick="spaDelete(${f.id})">Delete</button></td>`;
+        tbody.appendChild(tr);
+      });
+    } catch (err) { console.error(err); }
+  }
+
+  async function doUpload() {
+    const input = document.getElementById("spaFileInput");
+    if (!input.files.length) return;
+    const formData = new FormData();
+    formData.append("file", input.files[0]);
+    try {
+      const res = await fetch(`${API_BASE}/api/files/upload`, { method: "POST", credentials: "include", body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      loadSpaFiles();
+    } catch (err) { alert(err.message); }
+    input.value = "";
+  }
+
+  async function spaDownload(id) {
+    const res = await fetch(`${API_BASE}/api/files/${id}/download`, { credentials: "include" });
+    if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.error || "Download failed"); return; }
+    const disposition = res.headers.get("Content-Disposition") || "";
+    let filename = "download";
+    const match = disposition.match(/filename="?([^"]+)"?/);
+    if (match) filename = match[1];
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+    window.URL.revokeObjectURL(url);
+  }
+
+  async function spaDelete(id) {
+    if (!confirm("Delete this file?")) return;
+    try { await apiRequest(`/api/files/${id}`, { method: "DELETE" }); loadSpaFiles(); }
+    catch (err) { alert(err.message); }
+  }
+
+  // Try to resume session on load
+  (async function init() {
+    try {
+      await apiRequest("/api/me");
+      showScreen("dashboardScreen");
+      loadSpaFiles();
+    } catch (e) { /* not logged in, stay on login screen */ }
+  })();
+</script>
+</body>
+</html>

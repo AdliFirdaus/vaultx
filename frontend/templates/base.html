@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}VaultX — Secure Cloud Storage{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #eef4f9;
+    --bg-card: #ffffff;
+    --bg-soft: #f3f9f7;
+    --bg-input: #f6faf9;
+    --border: #e1ebe9;
+    --border-soft: #eaf2f0;
+    --accent: #14b8a6;
+    --accent-dark: #0d9488;
+    --accent-soft: #e3f7f3;
+    --accent-softer: #eefbf8;
+    --blue: #4f8ff0;
+    --blue-soft: #e8f0fe;
+    --purple: #8b5cf6;
+    --purple-soft: #f1ecfe;
+    --text-primary: #16233a;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
+    --danger: #ef4d6a;
+    --danger-soft: #fdeef1;
+    --success: #12b981;
+    --success-soft: #e5f9f1;
+    --warning: #f5a524;
+    --warning-soft: #fef6e6;
+    --radius: 12px;
+    --font-head: 'Baloo 2', sans-serif;
+    --font-body: 'Nunito', sans-serif;
+    --font-mono: 'SFMono-Regular', Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 8% 8%, rgba(79, 143, 240, 0.10), transparent 40%),
+      radial-gradient(circle at 92% 15%, rgba(20, 184, 166, 0.12), transparent 38%),
+      radial-gradient(circle at 15% 92%, rgba(139, 92, 246, 0.08), transparent 40%),
+      radial-gradient(circle at 88% 90%, rgba(20, 184, 166, 0.10), transparent 42%);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3 { font-family: var(--font-head); letter-spacing: -0.01em; color: var(--text-primary); }
+
+  a { color: var(--accent-dark); text-decoration: none; font-weight: 700; }
+  a:hover { text-decoration: underline; }
+
+  .center-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 20px;
+  }
+
+  .panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 26px;
+    padding: 44px 40px;
+    width: 100%;
+    max-width: 430px;
+    box-shadow: 0 30px 70px -35px rgba(22, 35, 58, 0.25);
+    position: relative;
+  }
+  .panel-wide { max-width: 470px; }
+
+  .brand-lockup { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 18px; }
+  .brand-shield {
+    width: 38px; height: 38px; border-radius: 11px;
+    background: linear-gradient(150deg, var(--accent), var(--accent-dark));
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-family: var(--font-head); font-weight: 800; font-size: 15px;
+    box-shadow: 0 8px 18px -6px rgba(13, 148, 136, 0.55);
+  }
+  .brand-lockup .brand-name { font-family: var(--font-head); font-size: 23px; font-weight: 800; color: var(--text-primary); }
+
+  .badge-pill {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    background: var(--accent-soft); color: var(--accent-dark);
+    font-size: 11.5px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 6px 14px; border-radius: 20px; margin: 0 auto 22px; width: fit-content;
+  }
+
+  .panel h1 { font-size: 27px; margin: 0 0 8px; text-align: center; font-weight: 800; }
+  .panel p.subtitle { color: var(--text-secondary); margin: 0 0 28px; font-size: 14.5px; text-align: center; line-height: 1.6; }
+
+  label { display: block; font-size: 13.5px; font-weight: 700; color: var(--text-primary); margin-bottom: 7px; }
+
+  .input-group { position: relative; margin-bottom: 18px; }
+  .input-icon {
+    position: absolute; left: 4px; top: 4px; bottom: 4px; width: 38px;
+    background: var(--accent-softer); border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; font-size: 15px; pointer-events: none;
+  }
+  .input-eye {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    cursor: pointer; font-size: 15px; color: var(--text-muted); background: none; border: none; padding: 4px;
+  }
+
+  input[type="text"], input[type="email"], input[type="password"] {
+    width: 100%;
+    padding: 13px 14px 13px 52px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    background: var(--bg-input);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 14.5px;
+    font-weight: 600;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  input.has-eye { padding-right: 42px; }
+  input::placeholder { color: var(--text-muted); font-weight: 500; }
+  input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-soft);
+  }
+
+  .field-hint { display: flex; align-items: flex-start; gap: 7px; font-size: 12.5px; color: var(--text-secondary); margin: -10px 0 16px; line-height: 1.5; }
+  .field-hint .hint-icon { color: var(--success); flex-shrink: 0; margin-top: 1px; }
+  .field-error { color: var(--danger); font-size: 12.5px; margin: -12px 0 14px; display: none; font-weight: 600; }
+
+  .btn {
+    font-family: var(--font-body);
+    font-weight: 800;
+    font-size: 15px;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 22px;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  }
+  .btn-primary {
+    background: linear-gradient(120deg, var(--accent), var(--accent-dark));
+    color: #ffffff;
+    box-shadow: 0 12px 24px -10px rgba(13, 148, 136, 0.55);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 16px 28px -10px rgba(13, 148, 136, 0.6); }
+  .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+  .btn-ghost { background: var(--bg-soft); border: 1.5px solid var(--border); color: var(--text-primary); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent-dark); }
+  .btn-danger-ghost { background: var(--danger-soft); color: var(--danger); border: 1.5px solid transparent; }
+  .btn-danger-ghost:hover { background: #fbdde3; }
+  .btn-block { width: 100%; }
+
+  .divider { display: flex; align-items: center; gap: 12px; margin: 22px 0; }
+  .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+  .divider span { font-size: 11.5px; font-weight: 800; color: var(--text-muted); background: var(--bg-card); padding: 2px 8px; border: 1px solid var(--border); border-radius: 20px; }
+
+  .foot-note { text-align: center; margin-top: 4px; font-size: 14px; color: var(--text-secondary); font-weight: 600; }
+
+  .tip-box {
+    display: flex; gap: 12px; align-items: flex-start;
+    background: var(--accent-softer); border: 1px solid var(--border-soft);
+    border-radius: 14px; padding: 16px 18px; margin-top: 24px;
+  }
+  .tip-box .tip-icon {
+    width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+    background: linear-gradient(150deg, var(--accent), var(--accent-dark));
+    display: flex; align-items: center; justify-content: center; font-size: 15px;
+  }
+  .tip-box .tip-title { font-weight: 800; font-size: 13.5px; margin-bottom: 3px; }
+  .tip-box .tip-desc { font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; }
+
+  .banner {
+    border-radius: 12px;
+    padding: 13px 16px;
+    font-size: 13.5px;
+    margin-bottom: 20px;
+    display: none;
+    font-weight: 600;
+    border: 1px solid transparent;
+  }
+  .banner-error { background: var(--danger-soft); color: #c8385a; border-color: #f7c8d3; }
+  .banner-success { background: var(--success-soft); color: #0a8a5f; border-color: #b7ecd9; }
+
+  .otp-boxes { display: flex; gap: 9px; justify-content: space-between; margin-bottom: 22px; }
+  .otp-boxes input {
+    width: 100%; text-align: center; font-size: 22px; font-weight: 800;
+    padding: 14px 0; font-family: var(--font-head); background: var(--bg-input);
+  }
+
+  code, .mono { font-family: var(--font-mono); }
+  ::selection { background: var(--accent); color: #fff; }
+
+  @media (max-width: 600px) {
+    .panel { padding: 32px 24px; border-radius: 20px; }
+  }
+</style>
+{% block extra_head %}{% endblock %}
+</head>
+<body>
+{% block content %}{% endblock %}
+<script>
+  function toggleEye(inputId, btn) {
+    const input = document.getElementById(inputId);
+    if (input.type === "password") {
+      input.type = "text";
+      btn.textContent = "🙈";
+    } else {
+      input.type = "password";
+      btn.textContent = "👁️";
+    }
+  }
+</script>
+</body>
+</html>
