@@ -37,8 +37,8 @@ os.makedirs(STORAGE_DIR, exist_ok=True)
 
 app = Flask(
     __name__,
-    template_folder=os.path.join(os.path.dirname(BASE_DIR), "templates"),
-    static_folder=os.path.join(os.path.dirname(BASE_DIR), "static"),
+    template_folder=os.path.join(os.path.join(BASE_DIR), "templates"),
+    static_folder=os.path.join(os.path.join(BASE_DIR), "static"),
 )
 
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", pysecrets.token_hex(32))
